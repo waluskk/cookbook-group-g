@@ -141,6 +141,11 @@ createApp({
     },
     issuesUrl(){
       return `https://github.com/${this.owner}/${this.repo}/issues/new`;
+    },
+    basePath(){
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      if (parts.length > 0) return '/' + parts[0];
+      return '';
     }
   },
   methods: {
@@ -174,9 +179,9 @@ createApp({
       try {
         this.loadingRecipe = true;
         this.error = '';
-        // Use raw.githubusercontent.com for file content
-        const rawUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${this.recipesDir}/${encodeURIComponent(name)}`;
-        const res = await fetch(rawUrl);
+        const pageBase = window.location.origin + this.basePath; // np. https://lukaszchomatek.github.io + /cookbook-base
+        const url = `${pageBase}/${this.recipesDir}/${encodeURIComponent(name)}`;
+        const res = await fetch(url);
         if(!res.ok){
           throw new Error(`Nie udało się pobrać pliku: ${name} (${res.status})`);
         }
