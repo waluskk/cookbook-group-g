@@ -87,7 +87,7 @@
   <main class="main">
     <div class="content">
       <div v-if="loadingList" class="loading">Ładuję listę przepisów…</div>
-      <div v-else-if="recipeFiles.length === 0" class="empty">Brak przepisów w folderze <code>recipes</code>.</div>
+      <div v-else-if="recipeFiles.length === 0" class="empty">There are no recipes in the <code>recipes</code> folder. Add some to see the list.</div>
 
       <article v-if="!loadingList && recipeFiles.length" class="markdown-body">
         <div v-if="loadingRecipe" class="loading">Ładuję przepis <code>{{ selectedName }}</code>…</div>
@@ -104,7 +104,7 @@
           <span class="pill">Folder: recipes/</span>
         </div>
         <div>
-          <a :href="issuesUrl" target="_blank" rel="noopener">Zgłoś issue →</a>
+          <a :href="issuesUrl" target="_blank" rel="noopener">Create an issue →</a>
         </div>
       </div>
     </footer>
