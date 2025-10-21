@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Cookbook</title>
+  <!-- Vue 3 from CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Marked (Markdown → HTML) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- DOMPurify (sanitize HTML) -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;          /* slate-900 */
+      --panel: #111827;       /* gray-900 */
+      --text: #e5e7eb;        /* gray-200 */
+      --muted: #9ca3af;       /* gray-400 */
+      --accent: #60a5fa;      /* blue-400 */
+      --border: #1f2937;      /* gray-800 */
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+    .sidebar { border-right: 1px solid var(--border); background: var(--panel); overflow-y: auto; }
+    .main { overflow-y: auto; }
+
+    header { padding: 12px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: .2px; }
+    header code { background: #0b1220; padding: 2px 6px; border-radius: 6px; color: var(--muted); }
+
+    .list { padding: 8px; }
+    .item { display: block; padding: 8px 10px; border-radius: 8px; margin: 4px 0; cursor: pointer; border: 1px solid transparent; }
+    .item:hover { background: #0b1220; border-color: var(--border); }
+    .item.active { background: #0b1220; border-color: var(--accent); }
+    .item small { color: var(--muted); display:block; }
+
+    .content { max-width: 880px; margin: 0 auto; padding: 24px 24px 80px; }
+    .content .loading, .content .empty, .content .error { color: var(--muted); padding: 16px; border: 1px dashed var(--border); border-radius: 8px; }
+
+    /* Basic Markdown styling */
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .markdown-body h1 { font-size: 28px; }
+    .markdown-body h2 { font-size: 22px; margin-top: 24px; }
+    .markdown-body h3 { font-size: 18px; margin-top: 18px; }
+    .markdown-body p, .markdown-body li { line-height: 1.6; }
+    .markdown-body code { background: #0b1220; padding: 2px 6px; border-radius: 6px; }
+    .markdown-body pre { background: #0b1220; padding: 12px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); }
+    .markdown-body table { border-collapse: collapse; width: 100%; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 6px 8px; }
+
+    footer { position: sticky; bottom: 0; padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(17,24,39,.9); backdrop-filter: blur(6px); font-size: 12px; color: var(--muted); }
+    .footer-wrap { max-width: 880px; margin: 0 auto; display: flex; align-items:center; gap:10px; justify-content: space-between; }
+    .meta { display:flex; gap: 10px; align-items:center; }
+    .pill { border:1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+
+    @media (max-width: 900px){ .layout { grid-template-columns: 1fr; } .sidebar { height: 45vh; } .main { height: 55vh; } }
+  </style>
+</head>
+<body>
+<div id="app" class="layout">
+  <!-- Sidebar: recipe list pulled from GitHub API (folder 'recipes') -->
+  <aside class="sidebar">
+    <header>
+      <h1>Student Cookbook</h1>
+    </header>
+    <div class="list">
+      <div
+        v-for="file in recipeFiles"
+        :key="file.name"
+        class="item"
+        :class="{ active: file.name === selectedName }"
+        @click="selectRecipe(file.name)"
+        role="button"
+        :aria-label="'Open recipe ' + file.name"
+      >
+        {{ file.name.replace(/\.md$/,'') }}
+        <small>{{ file.name }}</small>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main: rendered markdown -->
+  <main class="main">
+    <div class="content">
+      <div v-if="loadingList" class="loading">Ładuję listę przepisów…</div>
+      <div v-else-if="recipeFiles.length === 0" class="empty">Brak przepisów w folderze <code>recipes</code>.</div>
+
+      <article v-if="!loadingList && recipeFiles.length" class="markdown-body">
+        <div v-if="loadingRecipe" class="loading">Ładuję przepis <code>{{ selectedName }}</code>…</div>
+        <div v-else-if="error" class="error">Błąd: {{ error }}</div>
+        <div v-else v-html="renderedHtml"></div>
+      </article>
+    </div>
+
+    <footer>
+      <div class="footer-wrap">
+        <div class="meta">
+          <span class="pill">Repo: <a :href="repoUrl" target="_blank" rel="noopener">{{ owner }}/{{ repo }}</a></span>
+          <span class="pill">Branch: {{ branch }}</span>
+          <span class="pill">Folder: recipes/</span>
+        </div>
+        <div>
+          <a :href="issuesUrl" target="_blank" rel="noopener">Zgłoś issue →</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data(){
+    return {
+      // ⬇️ USTAW TE 3 POLA dla swojego repozytorium
+      owner: 'OWNER_NAME',   // np. 'pl-tul-iit-2025'
+      repo: 'student-cookbook',
+      branch: 'main',
+      recipesDir: 'recipes',
+
+      recipeFiles: [],
+      selectedName: '',
+      renderedHtml: '',
+      loadingList: false,
+      loadingRecipe: false,
+      error: ''
+    }
+  },
+  computed: {
+    apiListUrl(){
+      const base = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.recipesDir}`;
+      const ref = `?ref=${encodeURIComponent(this.branch)}`;
+      return base + ref;
+    },
+    repoUrl(){
+      return `https://github.com/${this.owner}/${this.repo}`;
+    },
+    issuesUrl(){
+      return `https://github.com/${this.owner}/${this.repo}/issues/new`;
+    }
+  },
+  methods: {
+    async fetchRecipes(){
+      try {
+        this.loadingList = true;
+        this.error = '';
+        const res = await fetch(this.apiListUrl, { headers: { 'Accept': 'application/vnd.github+json' }});
+        if(!res.ok){
+          throw new Error(`GitHub API ${res.status} ${res.statusText}`);
+        }
+        const data = await res.json();
+        // Filter only Markdown files
+        this.recipeFiles = (Array.isArray(data) ? data : []).filter(f => f.type === 'file' && /\.md$/i.test(f.name));
+        // Auto-open first file
+        if(this.recipeFiles.length && !this.selectedName){
+          this.selectRecipe(this.recipeFiles[0].name);
+        }
+      } catch(e){
+        this.error = e.message || String(e);
+      } finally {
+        this.loadingList = false;
+      }
+    },
+    async selectRecipe(name){
+      if(!name) return;
+      this.selectedName = name;
+      await this.fetchRecipeMarkdown(name);
+    },
+    async fetchRecipeMarkdown(name){
+      try {
+        this.loadingRecipe = true;
+        this.error = '';
+        // Use raw.githubusercontent.com for file content
+        const rawUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${this.recipesDir}/${encodeURIComponent(name)}`;
+        const res = await fetch(rawUrl);
+        if(!res.ok){
+          throw new Error(`Nie udało się pobrać pliku: ${name} (${res.status})`);
+        }
+        const md = await res.text();
+        // Configure Marked (optional tweaks)
+        marked.setOptions({ breaks: true, mangle: false, headerIds: true });
+        const dirty = marked.parse(md);
+        this.renderedHtml = DOMPurify.sanitize(dirty);
+        // Scroll to top on change
+        document.querySelector('.main')?.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch(e){
+        this.error = e.message || String(e);
+        this.renderedHtml = '';
+      } finally {
+        this.loadingRecipe = false;
+      }
+    }
+  },
+  mounted(){
+    this.fetchRecipes();
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
