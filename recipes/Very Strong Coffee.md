@@ -3,7 +3,7 @@
 ## Ingredients
 
 1. Water (1 cup)
-2. 1 1/2 teaspoon of coffee
+2. 10 teaspoon of coffee
 3. Sugar (optional)
 
 ## Preparation
