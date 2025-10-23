@@ -3,7 +3,7 @@
 ## Ingredients
 
 1. Milk - 1 cup,
-2. honey - 1ts
+2. honey - 1tsp
 
 ## How to?
 
