@@ -4,7 +4,7 @@
 
 1. Water (1 cup)
 2. 1 1/2 teaspoon of coffee
-3. Sugar (optional)
+3. 1 1/2 teaspoon of Sugar (optional)
 
 ## Preparation
 
