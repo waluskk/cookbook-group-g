@@ -4,7 +4,7 @@
 
 1. Water (1 cup)
 2. 1 teabag or 1 teaspoon of tea leaves
-3. Sugar (optional)
+3. 1 teaspoon of Sugar (optional)
 
 ## Preparation
 
