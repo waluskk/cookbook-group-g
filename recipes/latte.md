@@ -1,4 +1,4 @@
-# Energizing coffee latte
+# Coffee latte
 
 ## Ingredients
 
@@ -12,4 +12,6 @@
 2. Steam milk until it's hot and velvety to create fine microfoam.
 3. Pour the steamed milk slowly over the espresso.
 4. Top with the thin layer of milk foam.
-5. Drink
+5. Add Sugar if you want to
+6. Wait to cool down
+7. Drink
